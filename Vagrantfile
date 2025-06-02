@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
     config.vm.box = "bento/debian-11"
-    config.vm.hostname = "debian-vm"
+    config.vm.hostname = "kfs-vm"
     
     config.vm.network "private_network", type: "dhcp"
     
@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
     SHELL
     
     config.vm.provider "virtualbox" do |vb|
-      vb.name = "Debian-VM"
+      vb.name = "KFS-VM"
       vb.memory = "2048"
       vb.cpus = 2
     end
