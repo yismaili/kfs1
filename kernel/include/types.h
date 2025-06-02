@@ -42,4 +42,4 @@ typedef enum { //VGA color constants
     VGA_WHITE = 15,
 } vga_color_t;
 
-#endif 
+#endif
