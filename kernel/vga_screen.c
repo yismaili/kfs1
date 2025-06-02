@@ -53,3 +53,23 @@ void _screen_update(){
         : "dN" (0x3D5), "a" (0x0E), "a" ((uint8_t)((position >> 8) & 0xFF))
     );
 }
+
+int8_t _vga_color(uint8_t fg, uint8_t bg) 
+{
+    return fg | (bg << 4);
+}
+
+void _screen_clear() {
+    const vga_entry blank = {
+        .character = ' ',
+        .attribute = _current_color
+    };
+    
+    for (uint32_t i = 0; i < VGA_SIZE; i++) {
+        _vga_buffer[i] = blank;
+    }
+    
+    _cursor_x = 0;
+    _cursor_y = 0;
+    _screen_update();
+}
