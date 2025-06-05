@@ -1,8 +1,13 @@
 #include "include/kernel.h"
 
+unsigned int _cursor_x = 0;
+unsigned int _cursor_y = 0;
+vga_entry* _vga_buffer = (vga_entry*)VGA_MEMORY;
+char _current_color = 0x07;
+
 void _screen_puts(char *str){
     int i = 0;
-    while (str[i] != NULL)
+    while (str[i] != '\0')
     {
         _screen_putchar(str[i]);
         i++;
@@ -39,19 +44,13 @@ void _screen_putchar(char c){
 void _screen_update(){
     unsigned int position = _cursor_y * VGA_WIDTH + _cursor_x;
 
-     __asm__ volatile (
-        "outb %1, %0\n\t"
-        "outb %2, %0"
-        :
-        : "dN" (0x3D4), "a" (0x0F), "a" ((uint8_t)(position & 0xFF))
-    );
+    // set cursor low byte
+    __asm__ volatile ("outb %%al, %%dx" : : "a"(0x0F), "d"(0x3D4));
+    __asm__ volatile ("outb %%al, %%dx" : : "a"((uint8_t)(position & 0xFF)), "d"(0x3D5));
     
-    __asm__ volatile (
-        "outb %1, %0\n\t"
-        "outb %2, %0"
-        :
-        : "dN" (0x3D5), "a" (0x0E), "a" ((uint8_t)((position >> 8) & 0xFF))
-    );
+    // set cursor high byte  
+    __asm__ volatile ("outb %%al, %%dx" : : "a"(0x0E), "d"(0x3D4));
+    __asm__ volatile ("outb %%al, %%dx" : : "a"((uint8_t)((position >> 8) & 0xFF)), "d"(0x3D5));
 }
 
 int8_t _vga_color(uint8_t fg, uint8_t bg) 

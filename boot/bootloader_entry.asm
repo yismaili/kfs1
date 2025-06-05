@@ -1,34 +1,32 @@
+MAGIC       equ 0x1BADB002  ; multiboot header     
+FLAGS       equ 0x00000003
+CHECKSUM    equ -(MAGIC + FLAGS)
 
-.set MAGIC,    0x1BADB002     // multiboot header     
-.set FLAGS,    0x00000003         
-.set CHECKSUM, -(MAGIC + FLAGS) 
+section .multiboot ; multiboot header section
+align 4
+    dd MAGIC
+    dd FLAGS
+    dd CHECKSUM
 
-.section .multiboot // multiboot header section
-    .align 4
-    .long MAGIC
-    .long FLAGS
-    .long CHECKSUM
-
-.section .bss //reserve stack space
-    .align 16
+section .bss  ;reserve stack space
+align 16
 stack_bottom:
-    .skip 16384
+    resb 16384 
 stack_top:
 
-.section .text // code section start
-.global _start
-.extern kernel_main
+section .text ; code section start
+global _start
+extern kernel_main
 
 _start:
-    mov $stack_top, %esp // setup the stack
+    mov esp, stack_top ; setup the stack
     
-    pushl $0 // clean old flags
+    push 0 ; clean old flags
     popf
     
     call kernel_main
     
-    cli // loop 
-1:  hlt
-    jmp 1b
-
-.size _start, . - _start
+    cli ; loop 
+.hang:
+    hlt
+    jmp .hang
