@@ -1,10 +1,10 @@
-CC = gcc # tools
+CC = gcc  # tools
 AS = nasm
 LD = ld
 
-CFLAGS = -m32 -ffreestanding -fno-builtin -fno-exceptions \ # for cross-compilation to i386
-         -fno-stack-protector -nostdlib -nodefaultlibs \
-         -Wall -Wextra -Ikernel/include
+CFLAGS = -m32 -ffreestanding -fno-builtin -fno-exceptions \
+	-fno-stack-protector -nostdlib -nodefaultlibs \
+	-Wall -Wextra -Ikernel/include
 
 ASFLAGS = -f elf32
 LDFLAGS = -m elf_i386 -T linker.ld
@@ -23,7 +23,7 @@ C_OBJECTS = $(C_SOURCES:$(KERNELDIR)/%.c=$(OBJDIR)/kernel_%.o)
 
 ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS)
 
-KERNEL = kernel.bin # output
+KERNEL = kernel.bin  # output
 ISO = kernel.iso
 
 .PHONY: all # def target
@@ -35,7 +35,7 @@ $(KERNEL): $(ALL_OBJECTS) linker.ld # build kernel binary
 	@echo "Kernel built successfully!"
 
 $(OBJDIR)/%.o: $(BOOTDIR)/%.asm | $(OBJDIR) # compile assembly files
-	@echo "Assembling $<..." 
+	@echo "Assembling $<..."
 	$(AS) $(ASFLAGS) $< -o $@
 
 $(OBJDIR)/kernel_%.o: $(KERNELDIR)/%.c | $(OBJDIR) # compile C files
@@ -60,17 +60,22 @@ $(ISODIR)/boot/grub/grub.cfg: grub.cfg
 	mkdir -p $(ISODIR)/boot/grub
 	cp grub.cfg $(ISODIR)/boot/grub/
 
-
 .PHONY: test # to test with QEMU
 test: $(ISO)
-	@echo "Starting QEMU..."
-	qemu-system-i386 -cdrom $(ISO)
+	@echo "Starting QEMU (emulation mode)..."
+	qemu-system-i386 -cdrom $(ISO) -m 512M
 
-.PHONY: test-nox # to test with QEMU (no graphics, serial output)
-test-nox: $(ISO)
-	@echo "Starting QEMU (no graphics)..."
-	qemu-system-i386 -cdrom $(ISO) -nographic
-
+.PHONY: test-kvm # to test with QEMU and KVM
+test-kvm: $(ISO)
+	@echo "Starting QEMU with KVM acceleration..."
+	@if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then \
+		echo "KVM available - using hardware acceleration"; \
+		qemu-system-i386 -cdrom $(ISO) -enable-kvm -m 512M; \
+	else \
+		echo "KVM not available or no permissions - falling back to emulation"; \
+		echo "To enable KVM: sudo usermod -a -G kvm $$USER (then logout/login)"; \
+		qemu-system-i386 -cdrom $(ISO) -m 512M; \
+	fi
 
 .PHONY: clean
 clean:
@@ -82,13 +87,19 @@ clean:
 help:
 	@echo "KFS_1 Kernel Build System"
 	@echo "========================="
-	@echo "Available targets:"
-	@echo "  all      - Build kernel binary (default)"
-	@echo "  iso      - Create bootable ISO image"
-	@echo "  test     - Test kernel with QEMU"
-	@echo "  test-nox - Test kernel with QEMU (no graphics)"
-	@echo "  clean    - Remove build files"
-	@echo "  help     - Show this help"
+	@echo "Build targets:"
+	@echo "  all         - Build kernel binary (default)"
+	@echo "  iso         - Create bootable ISO image"
+	@echo "  clean       - Remove build files"
+	@echo ""
+	@echo "Testing targets:"
+	@echo "  test        - Test with QEMU (pure emulation)"
+	@echo "  test-kvm    - Test with QEMU + KVM (hardware acceleration)"
+	@echo "  help        - Show this help"
+	@echo ""
+	@echo "Virtualization comparison:"
+	@echo "  test        - Pure emulation (slowest, most compatible)"
+	@echo "  test-kvm    - Hardware acceleration (fastest, requires KVM)"
 	@echo ""
 	@echo "Requirements:"
 	@echo "  - gcc (with 32-bit support)"
@@ -96,11 +107,35 @@ help:
 	@echo "  - ld"
 	@echo "  - grub-mkrescue (for ISO creation)"
 	@echo "  - qemu-system-i386 (for testing)"
+	@echo "  - KVM support (optional, for acceleration)"
+	@echo ""
+	@echo "KVM Setup:"
+	@echo "  1. Check CPU support: grep -E '(vmx|svm)' /proc/cpuinfo"
+	@echo "  2. Install KVM: sudo apt install qemu-kvm (Ubuntu/Debian)"
+	@echo "  3. Add user to group: sudo usermod -a -G kvm \$$USER"
+	@echo "  4. Logout and login again"
+	@echo "  5. Test: make test-kvm"
 
-.PHONY: info # show kernel info
+.PHONY: info  # show kernel info
 info: $(KERNEL)
 	@echo "Kernel Information:"
 	@echo "=================="
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
 	@echo "Type: $$(file $(KERNEL))"
+	@echo ""
+	@echo "System Information:"
+	@echo "=================="
+	@echo -n "KVM Support: "
+	@if [ -e /dev/kvm ]; then \
+		echo "Available ✓"; \
+	else \
+		echo "Not available ✗"; \
+	fi
+	@echo -n "CPU Virtualization: "
+	@if grep -q -E '(vmx|svm)' /proc/cpuinfo 2>/dev/null; then \
+		echo "Supported ✓"; \
+	else \
+		echo "Not supported or unknown ✗"; \
+	fi
+	@echo ""
 	@objdump -h $(KERNEL)
