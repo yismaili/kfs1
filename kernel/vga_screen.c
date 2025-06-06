@@ -34,7 +34,7 @@ void _screen_putchar(char c){
         _cursor_x++;
     }
 
-    if (_cursor_x >= VGA_WIDTH) {
+    if (_cursor_x >= VGA_WIDTH) { //Handle line wrapping
         _cursor_x = 0;
         _cursor_y++;
     }
