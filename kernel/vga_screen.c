@@ -38,6 +38,11 @@ void _screen_putchar(char c){
         _cursor_x = 0;
         _cursor_y++;
     }
+
+    if (_cursor_y >= VGA_HEIGHT) {   //Handle screen scrolling 
+        _screen_scroll();
+        _cursor_y = VGA_HEIGHT - 1;
+    }
     _screen_update();
 }
 
@@ -64,11 +69,35 @@ void _screen_clear() {
         .attribute = _current_color
     };
     
-    for (uint32_t i = 0; i < VGA_SIZE; i++) {
+    uint32_t i = 0;
+    while (i < VGA_SIZE) {
         _vga_buffer[i] = blank;
+        i++;
     }
     
     _cursor_x = 0;
     _cursor_y = 0;
     _screen_update();
+}
+
+void _screen_scroll(void) {
+
+    const vga_entry blank = {
+        .character = ' ',
+        .attribute = _current_color
+    };
+    
+    
+    uint32_t i = 0;
+    while (i < (VGA_HEIGHT - 1) * VGA_WIDTH) { // Move all lines up 
+        _vga_buffer[i] = _vga_buffer[i + VGA_WIDTH];
+        i++;
+    }
+
+  // Clear last line
+    i = (VGA_HEIGHT - 1) * VGA_WIDTH; 
+    while (i < VGA_SIZE) {
+        _vga_buffer[i] = blank;
+        i++;
+    }
 }

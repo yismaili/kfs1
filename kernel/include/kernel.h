@@ -23,6 +23,7 @@ void _screen_puts(char* str);
 void _screen_update();
 void _screen_clear();
 int8_t _vga_color(uint8_t fg, uint8_t bg);
+void _screen_scroll(void);
 
 int kfs_strcmp(const char* s1, const char* s2);
 char* kfs_strcpy(char* dest, const char* src);
