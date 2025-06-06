@@ -30,13 +30,11 @@ Vagrant.configure("2") do |config|
     vb.memory = 4096
     vb.cpus = 3
 
-    # Optional performance and usability settings
     vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
     vb.customize ["modifyvm", :id, "--vram", "128"]
     vb.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
     vb.customize ["modifyvm", :id, "--draganddrop", "bidirectional"]
-
-    # Enable nested virtualization (if supported by host)
+    
     vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
   end
 end

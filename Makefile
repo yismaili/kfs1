@@ -68,14 +68,14 @@ test: $(ISO)
 .PHONY: test-kvm # to test with QEMU and KVM
 test-kvm: $(ISO)
 	@echo "Starting QEMU with KVM acceleration..."
-	@if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then \
-		echo "KVM available - using hardware acceleration"; \
+	# @if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then \
+	# 	echo "KVM available - using hardware acceleration"; \
 		qemu-system-i386 -cdrom $(ISO) -enable-kvm -m 512M; \
-	else \
-		echo "KVM not available or no permissions - falling back to emulation"; \
-		echo "To enable KVM: sudo usermod -a -G kvm $$USER (then logout/login)"; \
-		qemu-system-i386 -cdrom $(ISO) -m 512M; \
-	fi
+	# else \
+	# 	echo "KVM not available or no permissions - falling back to emulation"; \
+	# 	echo "To enable KVM: sudo usermod -a -G kvm $$USER (then logout/login)"; \
+	# 	qemu-system-i386 -cdrom $(ISO) -m 512M; \
+	# fi
 
 .PHONY: clean
 clean:
@@ -97,6 +97,7 @@ help:
 	@echo "  test-kvm    - Test with QEMU + KVM (hardware acceleration)"
 	@echo "  help        - Show this help"
 	@echo ""
+	
 .PHONY: info  # show kernel info
 info: $(KERNEL)
 	@echo "Kernel Information:"
